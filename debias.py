@@ -6,6 +6,7 @@ from src import classifier
 from typing import List
 from tqdm import tqdm
 from sklearn.linear_model import SGDClassifier, SGDRegressor, Perceptron, LogisticRegression
+from sklearn.metrics import multilabel_confusion_matrix
 
 import random
 import warnings
@@ -99,6 +100,7 @@ def get_debiasing_projection(classifier_class, cls_params: Dict, num_classifiers
     Ws = []
     accuracies = {}
     toxicity_accuracies = {}
+    predictions = {}
 
     pbar = tqdm(range(num_classifiers))
     for i in pbar:
@@ -154,6 +156,7 @@ def get_debiasing_projection(classifier_class, cls_params: Dict, num_classifiers
             #clf = SGDClassifier(verbose=10, n_jobs = 32)
             clf.fit(P.dot(X_train.T).T, Y_train_main)
             toxicity_accuracy = (clf.score(P.dot(X_test.T).T, Y_test))
+            predictions[i] = clf.predict(P.dot(X_test.T).T)
             toxicity_accuracies[i] = toxicity_accuracy
             #clf.fit(X_train, Y_train_main)
 
@@ -166,7 +169,7 @@ def get_debiasing_projection(classifier_class, cls_params: Dict, num_classifiers
 
     P = get_projection_to_intersection_of_nullspaces(rowspace_projections, input_dim)
 
-    return P, rowspace_projections, Ws, accuracies, toxicity_accuracies
+    return P, rowspace_projections, Ws, accuracies, toxicity_accuracies, predictions
 
 
 if __name__ == '__main__':
